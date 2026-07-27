@@ -1,0 +1,9 @@
+pub mod auth;
+pub mod products;
+pub mod transactions;
+pub mod stocks;
+pub mod reports;
+pub mod backup;
+pub mod promotions;
+pub mod printer;
+pub mod scales;
