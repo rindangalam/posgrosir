@@ -11,7 +11,7 @@
 
 ---
 
-## 📋 Overview
+## Overview
 
 **POS Grosir** is a comprehensive desktop Point of Sale system designed specifically for wholesale retail businesses. Built with Tauri for native performance, it provides complete inventory management, transaction processing, FIFO costing, promotional engine, and hardware integration (barcode scanner, thermal printer, cash drawer, digital scale).
 
@@ -27,9 +27,9 @@
 
 ---
 
-## ✨ Features
+## Features
 
-### 💰 Point of Sale (Cashier)
+### Point of Sale (Cashier)
 
 #### Transaction Processing
 - Barcode scanner integration with auto-add to cart
@@ -57,7 +57,7 @@
 - Cash drawer kick integration
 - Print queue with retry mechanism
 
-### 📦 Inventory Management
+### Inventory Management
 
 #### Product Management (CRUD)
 - Product catalog with categories
@@ -83,7 +83,7 @@
 - Variance reporting
 - Stock correction history
 
-### 🎉 Promotions
+### Promotions
 
 #### Promotional Engine
 - Multiple promotion types:
@@ -102,7 +102,7 @@
 - Promotion scheduling
 - Priority ordering
 
-### 📊 Reports & Analytics
+### Reports & Analytics
 
 #### Daily Reports
 - Daily sales summary
@@ -125,7 +125,7 @@
 - Batch expiry tracking
 - Stock movement history
 
-### ⚙️ Settings & Configuration
+### Settings & Configuration
 
 #### Hardware Settings
 - **Barcode Scanner**:
@@ -151,7 +151,7 @@
 - Currency format
 - Database backup/restore
 
-### ⌨️ Keyboard Shortcuts
+### ⌨ Keyboard Shortcuts
 - **F1** - Focus barcode/search input
 - **F2** - Proceed to payment
 - **Escape** - Cancel current action
@@ -159,7 +159,7 @@
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -175,7 +175,7 @@
 
 ---
 
-## 📋 System Requirements
+## System Requirements
 
 ### Development
 - **Node.js** >= 18
@@ -191,7 +191,7 @@
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ### For End Users (Windows)
 
@@ -238,71 +238,71 @@ This starts the Vite dev server and Tauri in development mode.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 posgrosir/
-├── src/                           # Frontend (React)
-│   ├── components/
-│   │   ├── cashier/               # Cashier components
-│   │   │   ├── ProductSearch.tsx
-│   │   │   ├── CartItemRow.tsx
-│   │   │   └── ...
-│   │   └── layout/                # Layout components
-│   ├── pages/                     # Application pages
-│   │   ├── Cashier.tsx            # Main POS screen
-│   │   ├── CashierPayment.tsx     # Payment screen
-│   │   ├── CashierSuccess.tsx     # Success screen
-│   │   ├── Products.tsx           # Product management
-│   │   ├── Stock.tsx              # Batch stock management
-│   │   ├── StockOpname.tsx        # Stock counting
-│   │   ├── Promotions.tsx         # Promotion management
-│   │   ├── Reports.tsx            # Reports dashboard
-│   │   └── Settings.tsx           # System settings
-│   ├── stores/                    # Zustand stores
-│   │   ├── cartStore.ts           # Shopping cart state
-│   │   └── uiStore.ts             # UI preferences
-│   ├── hooks/                     # Custom React hooks
-│   │   ├── useBarcodeScanner.ts
-│   │   ├── usePrinter.ts
-│   │   ├── useScale.ts
-│   │   └── useDatabase.ts
-│   ├── lib/                       # Utilities
-│   │   ├── currency.ts
-│   │   ├── date.ts
-│   │   └── receipt.ts
-│   └── types/                     # TypeScript types
-├── src-tauri/                     # Backend (Rust)
-│   ├── src/
-│   │   ├── commands/              # Tauri commands (API)
-│   │   │   ├── products.rs
-│   │   │   ├── transactions.rs
-│   │   │   ├── promotions.rs
-│   │   │   ├── printer.rs
-│   │   │   └── scales.rs
-│   │   ├── db/                    # Database layer
-│   │   │   ├── connection.rs
-│   │   │   └── migrations.rs
-│   │   ├── models/                # Data models
-│   │   ├── fifo.rs                # FIFO inventory engine
-│   │   ├── printer.rs             # ESC/POS printer
-│   │   ├── scales.rs              # Digital scale
-│   │   └── lib.rs                 # Main entry point
-│   ├── migrations/                # SQL migrations
-│   │   └── 001_initial.sql        # Initial schema (11 tables)
-│   └── tests/                     # Integration tests
-├── docs/
-│   ├── sprints.md                 # Sprint planning
-│   └── manual_test.md             # Manual testing scenarios
-├── progress.md                    # Development progress log
-├── package.json
-├── vite.config.ts
-└── tauri.conf.json                # Tauri configuration
+ src/                           # Frontend (React)
+    components/
+       cashier/               # Cashier components
+          ProductSearch.tsx
+          CartItemRow.tsx
+          ...
+       layout/                # Layout components
+    pages/                     # Application pages
+       Cashier.tsx            # Main POS screen
+       CashierPayment.tsx     # Payment screen
+       CashierSuccess.tsx     # Success screen
+       Products.tsx           # Product management
+       Stock.tsx              # Batch stock management
+       StockOpname.tsx        # Stock counting
+       Promotions.tsx         # Promotion management
+       Reports.tsx            # Reports dashboard
+       Settings.tsx           # System settings
+    stores/                    # Zustand stores
+       cartStore.ts           # Shopping cart state
+       uiStore.ts             # UI preferences
+    hooks/                     # Custom React hooks
+       useBarcodeScanner.ts
+       usePrinter.ts
+       useScale.ts
+       useDatabase.ts
+    lib/                       # Utilities
+       currency.ts
+       date.ts
+       receipt.ts
+    types/                     # TypeScript types
+ src-tauri/                     # Backend (Rust)
+    src/
+       commands/              # Tauri commands (API)
+          products.rs
+          transactions.rs
+          promotions.rs
+          printer.rs
+          scales.rs
+       db/                    # Database layer
+          connection.rs
+          migrations.rs
+       models/                # Data models
+       fifo.rs                # FIFO inventory engine
+       printer.rs             # ESC/POS printer
+       scales.rs              # Digital scale
+       lib.rs                 # Main entry point
+    migrations/                # SQL migrations
+       001_initial.sql        # Initial schema (11 tables)
+    tests/                     # Integration tests
+ docs/
+    sprints.md                 # Sprint planning
+    manual_test.md             # Manual testing scenarios
+ progress.md                    # Development progress log
+ package.json
+ vite.config.ts
+ tauri.conf.json                # Tauri configuration
 ```
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 ### 11 Core Tables
 
@@ -320,7 +320,7 @@ posgrosir/
 
 ---
 
-## 🔧 FIFO Engine
+## FIFO Engine
 
 ### How It Works
 
@@ -343,7 +343,7 @@ The FIFO (First-In-First-Out) engine automatically allocates inventory from the 
 
 ---
 
-## 🖨️ Hardware Integration
+## Hardware Integration
 
 ### Thermal Printer (ESC/POS)
 
@@ -388,7 +388,7 @@ The FIFO (First-In-First-Out) engine automatically allocates inventory from the 
 
 ---
 
-## 📊 Reports Available
+## Reports Available
 
 ### Daily Summary
 - Total revenue
@@ -453,7 +453,7 @@ See `docs/manual_test.md` for 10 manual testing scenarios:
 
 ---
 
-## 📦 Building Installer
+## Building Installer
 
 ### Windows NSIS Installer
 
@@ -470,37 +470,37 @@ Output: `src-tauri/target/release/bundle/nsis/POS_Grosir_0.1.0_x64-setup.exe`
 
 ---
 
-## 🎯 Development Sprints
+## Development Sprints
 
-### ✅ Completed (6 Sprints, 12 Sub-sprints)
+### Completed (6 Sprints, 12 Sub-sprints)
 
 **Sprint 1** - Foundation
-- 1.1: Tauri + React + Tailwind + Router ✅
-- 1.2: SQLite schema + migrations ✅
+- 1.1: Tauri + React + Tailwind + Router 
+- 1.2: SQLite schema + migrations 
 
 **Sprint 2** - Core POS
-- 2.1: Cart store + product search ✅
-- 2.2: Checkout + multi-payment ✅
-- 2.3: Promo engine + receipt preview ✅
+- 2.1: Cart store + product search 
+- 2.2: Checkout + multi-payment 
+- 2.3: Promo engine + receipt preview 
 
 **Sprint 3** - Inventory
-- 3.1: CRUD products + categories ✅
-- 3.2: CRUD batch stock + FIFO ✅
+- 3.1: CRUD products + categories 
+- 3.2: CRUD batch stock + FIFO 
 
 **Sprint 4** - Reports
-- 4.1: Revenue reports + top products ✅
-- 4.2: Stock opname + daily summary ✅
+- 4.1: Revenue reports + top products 
+- 4.2: Stock opname + daily summary 
 
 **Sprint 5** - Hardware
-- 5.1: ESC/POS printer + cash drawer ✅
-- 5.2: Digital scale + polish ✅
+- 5.1: ESC/POS printer + cash drawer 
+- 5.2: Digital scale + polish 
 
 **Sprint 6** - Release
-- 6.1: Testing + NSIS installer ✅
+- 6.1: Testing + NSIS installer 
 
 ---
 
-## 🔧 Development Commands
+## Development Commands
 
 ```bash
 npm run dev        # Start development server (Vite + Tauri)
@@ -517,7 +517,7 @@ cargo tauri build  # Build production installer
 
 ---
 
-## 📝 Configuration Files
+## Configuration Files
 
 - `tauri.conf.json` - Tauri app configuration
 - `vite.config.ts` - Vite build configuration
@@ -536,20 +536,20 @@ This is a commercial project. For internal development:
 
 ---
 
-## 📄 License
+## License
 
 Proprietary - All rights reserved
 
 ---
 
-## 👤 Author
+## Author
 
 **Rindang Alam Nur Muhammad**  
 GitHub: [@rindangalam](https://github.com/rindangalam)
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Built with:
 - [Tauri](https://tauri.app/) - Native desktop framework
@@ -561,7 +561,7 @@ Built with:
 
 ---
 
-## 📧 Support
+## Support
 
 For issues or feature requests:
 - Open an issue on [GitHub Issues](https://github.com/rindangalam/posgrosir/issues)
