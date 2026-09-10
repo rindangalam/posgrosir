@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 
 interface ProductBrief {
@@ -11,8 +11,10 @@ interface ProductBrief {
 
 export default function StockBatchForm() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [searchParams] = useSearchParams();
   const productIdParam = searchParams.get("product_id");
+  const isEdit = Boolean(id);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ProductBrief[]>([]);
@@ -27,12 +29,42 @@ export default function StockBatchForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // If product_id is in URL, fetch product
+  // Load batch data for edit mode
   useEffect(() => {
-    if (!productIdParam) return;
+    if (!id) return;
     (async () => {
       try {
-        const res = await invoke<{ product: ProductBrief & { is_active: boolean; created_at: string; updated_at: string; description: string; category_id: number | null; purchase_price: number; selling_price: number; stock_threshold: number }; total_stock: number }>("get_product", { id: parseInt(productIdParam) });
+        const batch = await invoke<{
+          id: number; product_id: number; quantity: number; purchase_price: number;
+          expiry_date: string | null; batch_code: string; supplier: string;
+        }>("get_batch", { id: parseInt(id) });
+
+        setQuantity(String(batch.quantity));
+        setPurchasePrice(String(batch.purchase_price));
+        setExpiryDate(batch.expiry_date || "");
+        setBatchCode(batch.batch_code);
+        setSupplier(batch.supplier);
+
+        // Load product info
+        const res = await invoke<{ product: ProductBrief & { is_active: boolean } }>("get_product", { id: batch.product_id });
+        setSelectedProduct({
+          id: res.product.id,
+          plu_code: res.product.plu_code,
+          name: res.product.name,
+          base_unit: res.product.base_unit,
+        });
+      } catch {
+        setError("Gagal memuat data batch");
+      }
+    })();
+  }, [id]);
+
+  // If product_id is in URL (create mode), fetch product
+  useEffect(() => {
+    if (!productIdParam || isEdit) return;
+    (async () => {
+      try {
+        const res = await invoke<{ product: ProductBrief & { is_active: boolean } }>("get_product", { id: parseInt(productIdParam) });
         setSelectedProduct({
           id: res.product.id,
           plu_code: res.product.plu_code,
@@ -43,7 +75,7 @@ export default function StockBatchForm() {
         /* ignore */
       }
     })();
-  }, [productIdParam]);
+  }, [productIdParam, isEdit]);
 
   const searchProduct = async (q: string) => {
     setSearchQuery(q);
@@ -64,16 +96,27 @@ export default function StockBatchForm() {
 
     setSaving(true);
     try {
-      await invoke("create_batch", {
-        productId: selectedProduct.id,
-        input: {
+      if (isEdit) {
+        await invoke("update_batch", {
+          id: parseInt(id!),
           quantity: qty,
-          purchase_price: parseInt(purchasePrice) || 0,
-          expiry_date: expiryDate || null,
-          batch_code: batchCode.trim(),
+          purchasePrice: parseInt(purchasePrice) || 0,
+          expiryDate: expiryDate || null,
+          batchCode: batchCode.trim(),
           supplier: supplier.trim(),
-        },
-      });
+        });
+      } else {
+        await invoke("create_batch", {
+          productId: selectedProduct.id,
+          input: {
+            quantity: qty,
+            purchase_price: parseInt(purchasePrice) || 0,
+            expiry_date: expiryDate || null,
+            batch_code: batchCode.trim(),
+            supplier: supplier.trim(),
+          },
+        });
+      }
       navigate("/stocks");
     } catch (err) {
       setError(String(err));
@@ -86,23 +129,25 @@ export default function StockBatchForm() {
     <div className="max-w-lg mx-auto space-y-4">
       <div className="flex items-center gap-4">
         <button className="btn btn-ghost btn-sm" onClick={() => navigate("/stocks")}>← Kembali</button>
-        <h1 className="text-2xl font-bold">Tambah Batch Stok</h1>
+        <h1 className="text-2xl font-bold">{isEdit ? "Edit Batch Stok" : "Tambah Batch Stok"}</h1>
       </div>
 
       {error && <div className="alert alert-error"><span>{error}</span></div>}
 
       {/* Product selection */}
       <div className="bg-base-200 rounded-box p-4 space-y-2">
-        <label className="label"><span className="label-text">Pilih Produk</span></label>
+        <label className="label"><span className="label-text">Produk</span></label>
         {selectedProduct ? (
           <div className="flex items-center justify-between">
             <div>
               <span className="font-medium">{selectedProduct.name}</span>
               <span className="text-xs text-base-content/60 ml-2">({selectedProduct.plu_code})</span>
             </div>
-            <button className="btn btn-ghost btn-xs" onClick={() => { setSelectedProduct(null); setSearchResults([]); }}>
-              Ganti
-            </button>
+            {!isEdit && (
+              <button className="btn btn-ghost btn-xs" onClick={() => { setSelectedProduct(null); setSearchResults([]); }}>
+                Ganti
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
@@ -171,7 +216,7 @@ export default function StockBatchForm() {
           <div className="flex gap-2 justify-end">
             <button className="btn btn-ghost" onClick={() => navigate("/stocks")}>Batal</button>
             <button className="btn btn-primary" disabled={saving} onClick={handleSave}>
-              {saving ? <span className="loading loading-spinner" /> : "Simpan Batch"}
+              {saving ? <span className="loading loading-spinner" /> : isEdit ? "Simpan Perubahan" : "Simpan Batch"}
             </button>
           </div>
         </>
