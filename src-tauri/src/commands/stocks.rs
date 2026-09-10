@@ -141,6 +141,34 @@ pub fn update_batch(
 }
 
 #[tauri::command]
+pub fn get_batch(id: i64, state: State<'_, Database>) -> Result<StockBatch, String> {
+    let conn = state.conn.lock().map_err(|e| format!("Lock error: {}", e))?;
+    conn.query_row(
+        "SELECT id, product_id, quantity, purchase_price, expiry_date,
+                received_date, batch_code, supplier, is_deleted,
+                created_at, updated_at
+         FROM stock_batches WHERE id = ?1",
+        params![id],
+        |row| {
+            Ok(StockBatch {
+                id: row.get(0)?,
+                product_id: row.get(1)?,
+                quantity: row.get(2)?,
+                purchase_price: row.get(3)?,
+                expiry_date: row.get(4)?,
+                received_date: row.get(5)?,
+                batch_code: row.get(6)?,
+                supplier: row.get(7)?,
+                is_deleted: row.get::<_, i64>(8)? != 0,
+                created_at: row.get(9)?,
+                updated_at: row.get(10)?,
+            })
+        },
+    )
+    .map_err(|e| format!("Batch not found: {}", e))
+}
+
+#[tauri::command]
 pub fn delete_batch(id: i64, state: State<'_, Database>) -> Result<(), String> {
     let conn = state.conn.lock().map_err(|e| format!("Lock error: {}", e))?;
     conn.execute(

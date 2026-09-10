@@ -76,6 +76,7 @@ pub fn run() {
             commands::products::delete_category,
             commands::products::set_unit_conversions,
             commands::stocks::list_batches,
+            commands::stocks::get_batch,
             commands::stocks::create_batch,
             commands::stocks::update_batch,
             commands::stocks::delete_batch,
