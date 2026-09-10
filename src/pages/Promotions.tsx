@@ -15,6 +15,9 @@ interface FormData {
   scope_id: string; start_date: string; end_date: string;
 }
 
+interface CategoryOption { id: number; name: string; }
+interface ProductOption { id: number; name: string; plu_code: string; }
+
 const emptyForm: FormData = {
   name: "", promo_type: "percentage", value: "", scope: "all",
   scope_id: "", start_date: "", end_date: "",
@@ -31,6 +34,9 @@ export default function Promotions() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+
   const fetchPromotions = useCallback(async () => {
     setLoading(true);
     try { setPromotions(await invoke<Promotion[]>("list_promotions")); }
@@ -39,6 +45,19 @@ export default function Promotions() {
   }, []);
 
   useEffect(() => { fetchPromotions(); }, [fetchPromotions]);
+
+  const fetchScopeOptions = useCallback(async () => {
+    try {
+      const [cats, prods] = await Promise.all([
+        invoke<{ id: number; name: string }[]>("list_categories"),
+        invoke<{ product: { id: number; name: string; plu_code: string } }[]>("list_products", { search: "", page: 1, limit: 500 }),
+      ]);
+      setCategories(cats);
+      setProducts(prods.map((p) => ({ id: p.product.id, name: p.product.name, plu_code: p.product.plu_code })));
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { if (showForm) fetchScopeOptions(); }, [showForm, fetchScopeOptions]);
 
   const resetForm = () => { setForm(emptyForm); setEditingId(null); setError(""); };
 
@@ -168,17 +187,34 @@ export default function Promotions() {
                 <div className="flex-1">
                   <label className="label"><span className="label-text">Scope</span></label>
                   <select className="select select-bordered w-full" value={form.scope}
-                    onChange={(e) => setForm({ ...form, scope: e.target.value })}>
+                    onChange={(e) => setForm({ ...form, scope: e.target.value, scope_id: "" })}>
                     <option value="all">Semua Produk</option>
                     <option value="category">Per Kategori</option>
                     <option value="product">Per Produk</option>
                   </select>
                 </div>
-                {form.scope !== "all" && (
+                {form.scope === "category" && (
                   <div className="flex-1">
-                    <label className="label"><span className="label-text">{form.scope === "category" ? "ID Kategori" : "ID Produk"}</span></label>
-                    <input type="number" className="input input-bordered w-full" value={form.scope_id}
-                      onChange={(e) => setForm({ ...form, scope_id: e.target.value })} />
+                    <label className="label"><span className="label-text">Kategori</span></label>
+                    <select className="select select-bordered w-full" value={form.scope_id}
+                      onChange={(e) => setForm({ ...form, scope_id: e.target.value })}>
+                      <option value="">Pilih kategori...</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {form.scope === "product" && (
+                  <div className="flex-1">
+                    <label className="label"><span className="label-text">Produk</span></label>
+                    <select className="select select-bordered w-full" value={form.scope_id}
+                      onChange={(e) => setForm({ ...form, scope_id: e.target.value })}>
+                      <option value="">Pilih produk...</option>
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.plu_code})</option>
+                      ))}
+                    </select>
                   </div>
                 )}
               </div>
