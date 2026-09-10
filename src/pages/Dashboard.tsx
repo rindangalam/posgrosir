@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 import {
   ChartPieSlice, ShoppingCart, TrendUp, Cube,
@@ -20,9 +21,20 @@ interface DashboardStats {
   low_stock_count: number;
 }
 
+interface RecentTransaction {
+  id: number;
+  transaction_number: string;
+  grand_total: number;
+  payment_status: string;
+  payment_methods: string;
+  created_at: string;
+}
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [dbInfo, setDbInfo] = useState<DbInfo>({ tables: [], status: "loading" });
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentTrx, setRecentTrx] = useState<RecentTransaction[]>([]);
 
   useEffect(() => {
     invoke<string[]>("check_db")
@@ -31,6 +43,9 @@ export default function Dashboard() {
     invoke<DashboardStats>("get_dashboard_stats")
       .then(setStats)
       .catch(() => setStats(null));
+    invoke<RecentTransaction[]>("list_transactions", { limit: 5, page: 1 })
+      .then(setRecentTrx)
+      .catch(() => setRecentTrx([]));
   }, []);
 
   const statCards = [
@@ -57,7 +72,33 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-base-200 rounded-box p-4">
           <h2 className="font-heading font-bold mb-3">Aktivitas Terkini</h2>
-          <p className="text-sm text-base-content/60">Transaksi terakhir akan muncul di sini</p>
+          {recentTrx.length === 0 ? (
+            <p className="text-sm text-base-content/60">Belum ada transaksi hari ini</p>
+          ) : (
+            <div className="space-y-2">
+              {recentTrx.map((t) => (
+                <button
+                  key={t.id}
+                  className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-base-300 text-sm text-left transition-colors"
+                  onClick={() => navigate(`/reports/transactions/${t.id}`)}
+                >
+                  <div>
+                    <span className="font-mono text-xs text-base-content/60">{t.transaction_number}</span>
+                    <span className="ml-2 text-xs text-base-content/50">{t.payment_methods}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{formatRupiah(t.grand_total)}</span>
+                    <span className={`badge badge-xs ${
+                      t.payment_status === "completed" ? "badge-success" :
+                      t.payment_status === "voided" ? "badge-error" : "badge-warning"
+                    }`}>
+                      {t.payment_status}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="bg-base-200 rounded-box p-4">
           <h2 className="font-heading font-bold mb-3">Status Sistem</h2>
