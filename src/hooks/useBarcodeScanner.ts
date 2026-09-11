@@ -31,7 +31,11 @@ export function useBarcodeScanner(
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
       if (e.key === "Enter") {
+        if (isInput) return;
         const scanned = buffer.current.trim();
         if (scanned.length > 0 && scanned.length <= 50) {
           onScan({ barcode: scanned });
@@ -39,6 +43,8 @@ export function useBarcodeScanner(
         resetBuffer();
         return;
       }
+
+      if (isInput) return;
 
       if (e.key.length === 1) {
         const now = Date.now();

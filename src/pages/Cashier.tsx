@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import ProductSearch from "@/components/cashier/ProductSearch";
 import CartItemRow from "@/components/cashier/CartItemRow";
 import { useCartStore } from "@/stores/cartStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useScale } from "@/hooks/useScale";
+import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import { formatRupiah } from "@/lib/currency";
 import type { IItemDiscount } from "@/types/database";
 
@@ -54,6 +56,7 @@ export default function Cashier() {
   const [weighingTarget, setWeighingTarget] = useState<number | null>(null);
   const [weighing, setWeighing] = useState(false);
   const [weighingError, setWeighingError] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const recalcPromos = useCallback(
     async (cartItems: typeof items) => {
@@ -102,9 +105,43 @@ export default function Cashier() {
         stock_threshold: p.stock_threshold,
         promo_name: "",
       });
+
+      if (result.total_stock <= p.stock_threshold) {
+        toast.error(`Stok menipis: ${p.name} (sisa ${result.total_stock} ${p.base_unit})`, { duration: 4000 });
+      }
     },
     [addItem]
   );
+
+  const handleBarcodeScan = useCallback(
+    async (result: { barcode: string }) => {
+      const q = result.barcode.trim();
+      if (!q) return;
+      try {
+        const res = await invoke<SearchResult[]>("search_products", { query: q });
+        if (res.length === 1) {
+          const exact = res[0];
+          const matchByBarcode = exact.product.barcode === q;
+          const matchByPlu = exact.product.plu_code === q;
+          if (matchByBarcode || matchByPlu) {
+            handleSelectProduct(exact);
+            toast.success(`${exact.product.name} ditambahkan`);
+            return;
+          }
+        }
+        if (res.length > 0) {
+          searchRef.current?.focus();
+        } else {
+          toast.error(`Produk dengan barcode "${q}" tidak ditemukan`);
+        }
+      } catch {
+        toast.error("Gagal mencari produk");
+      }
+    },
+    [handleSelectProduct]
+  );
+
+  useBarcodeScanner(handleBarcodeScan);
 
   const handleDiscountClick = (productId: number) => {
     const item = items.find((i) => i.product_id === productId);
@@ -150,6 +187,9 @@ export default function Cashier() {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
       if (e.key === "F1") {
         e.preventDefault();
         navigate("/cashier");
@@ -157,17 +197,53 @@ export default function Cashier() {
       } else if (e.key === "F2") {
         e.preventDefault();
         searchRef.current?.focus();
+      } else if (e.key === "F3") {
+        e.preventDefault();
+        if (items.length > 0) handlePay();
       } else if (e.key === "Escape") {
         if (showDiscountModal) {
           setShowDiscountModal(false);
+        } else if (isInput) {
+          (e.target as HTMLElement).blur();
+          setSelectedIndex(-1);
+        } else if (selectedIndex >= 0) {
+          setSelectedIndex(-1);
         } else if (items.length > 0 && window.confirm("Batalkan transaksi?")) {
           clearCart();
+        }
+      } else if (!isInput && items.length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedIndex((prev) => Math.min(prev + 1, items.length - 1));
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedIndex((prev) => Math.max(prev - 1, 0));
+        } else if (selectedIndex >= 0) {
+          const selected = items[selectedIndex];
+          if (selected) {
+            if (e.key === "+" || e.key === "=") {
+              e.preventDefault();
+              updateQty(selected.product_id, selected.quantity + 1);
+            } else if (e.key === "-" || e.key === "_") {
+              e.preventDefault();
+              if (selected.quantity <= 1) {
+                removeItem(selected.product_id);
+                setSelectedIndex((prev) => Math.min(prev, items.length - 2));
+              } else {
+                updateQty(selected.product_id, selected.quantity - 1);
+              }
+            } else if (e.key === "Delete" || e.key === "Backspace") {
+              e.preventDefault();
+              removeItem(selected.product_id);
+              setSelectedIndex((prev) => Math.min(prev, items.length - 2));
+            }
+          }
         }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [navigate, showDiscountModal, items.length, clearCart]);
+  }, [navigate, showDiscountModal, items, selectedIndex, clearCart, updateQty, removeItem, handlePay]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
@@ -186,8 +262,8 @@ export default function Cashier() {
             </div>
           ) : (
             <div className="space-y-1">
-              {items.map((item) => (
-                <div key={item.product_id} className="flex items-center gap-1">
+              {items.map((item, idx) => (
+                <div key={item.product_id} className={`flex items-center gap-1 rounded-lg transition-colors ${idx === selectedIndex ? "bg-primary/10 ring-1 ring-primary" : ""}`}>
                   <CartItemRow
                     item={item}
                     onUpdateQty={updateQty}
@@ -245,7 +321,8 @@ export default function Cashier() {
           </div>
           <div className="flex flex-col gap-2 mt-4 text-xs text-base-content/60">
             <span>{items.length} item dalam keranjang</span>
-            <span className="hidden lg:block">Esc = Batal, F1 = Layar Kasir</span>
+            <span className="hidden lg:block">Esc = Batal, F1 = Kasir, F3 = Bayar</span>
+            <span className="hidden lg:block">↑↓ = Pilih, +/- = Qty, Del = Hapus</span>
           </div>
         </div>
 
