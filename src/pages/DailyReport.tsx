@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { ChartBar, Coins, TrendUp, ShoppingCart, CurrencyDollar, Download } from "@phosphor-icons/react";
+import { ChartBar, Coins, TrendUp, ShoppingCart, CurrencyDollar, Download, Printer } from "@phosphor-icons/react";
 import { formatRupiah } from "@/lib/currency";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
@@ -147,6 +147,9 @@ export default function DailyReport() {
           <div className="flex justify-end gap-2">
             <button className="btn btn-outline" disabled={!summary} onClick={handleExportCsv}>
               <Download size={18} /> Export CSV
+            </button>
+            <button className="btn btn-outline" disabled={!summary} onClick={() => window.print()}>
+              <Printer size={18} /> Cetak / PDF
             </button>
             <button className="btn btn-primary" disabled={generating} onClick={handleGenerate}>
               {generating ? <span className="loading loading-spinner" /> : "Generate & Tutup Kasir"}

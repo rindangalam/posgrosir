@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import { Package, Plus, UploadSimple, FileArrowDown, X, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { formatRupiah } from "@/lib/currency";
 import PageHeader from "@/components/ui/PageHeader";
@@ -60,6 +61,17 @@ export default function Products() {
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  const handleDelete = async (productId: number, productName: string) => {
+    if (!window.confirm(`Hapus produk "${productName}"?`)) return;
+    try {
+      await invoke("delete_product", { id: productId });
+      toast.success("Produk dihapus");
+      fetchProducts();
+    } catch (err) {
+      toast.error(String(err));
+    }
+  };
 
   const handleDownloadTemplate = async () => {
     try {
@@ -160,7 +172,12 @@ export default function Products() {
                   <td className="font-semibold">{formatRupiah(p.product.selling_price)}</td>
                   <td><span className={p.total_stock <= p.product.stock_threshold ? "text-error font-semibold" : ""}>{p.total_stock} {p.product.base_unit}</span></td>
                   <td className="text-xs">{p.product.stock_threshold}</td>
-                  <td><button className="btn btn-xs btn-ghost" onClick={() => navigate(`/products/form/${p.product.id}`)}>Edit</button></td>
+                  <td>
+                    <div className="flex gap-1">
+                      <button className="btn btn-xs btn-ghost" onClick={() => navigate(`/products/form/${p.product.id}`)}>Edit</button>
+                      <button className="btn btn-xs btn-ghost text-error" onClick={() => handleDelete(p.product.id, p.product.name)}>Hapus</button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

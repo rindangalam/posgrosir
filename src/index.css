@@ -42,3 +42,17 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--bc) / 0.4);
 }
+
+@media print {
+  aside, nav, header, .btn, .page-header-actions, [data-sidebar] {
+    display: none !important;
+  }
+  .page-content, main, .print-target {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}

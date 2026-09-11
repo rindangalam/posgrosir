@@ -104,6 +104,7 @@ export default function ProductForm() {
 
     setSaving(true);
     try {
+      let productId: number;
       if (isEdit) {
         await invoke("update_product", {
           id: parseInt(id!),
@@ -117,8 +118,9 @@ export default function ProductForm() {
           sellingPrice: form.selling_price,
           stockThreshold: form.stock_threshold,
         });
+        productId = parseInt(id!);
       } else {
-        await invoke("create_product", {
+        const created = await invoke<ProductData>("create_product", {
           input: {
             plu_code: form.plu_code.trim(),
             barcode: form.barcode.trim() || null,
@@ -131,7 +133,18 @@ export default function ProductForm() {
             stock_threshold: form.stock_threshold,
           },
         });
+        productId = created.id!;
       }
+
+      await invoke("set_unit_conversions", {
+        productId,
+        conversions: conversions.map((c) => ({
+          fromUnit: c.from_unit.trim(),
+          toUnit: c.to_unit.trim(),
+          factor: c.factor,
+          isDefault: c.is_default,
+        })),
+      });
 
       navigate("/products");
     } catch (err) {

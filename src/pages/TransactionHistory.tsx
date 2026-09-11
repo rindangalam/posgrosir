@@ -19,6 +19,7 @@ export default function TransactionHistory() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [method, setMethod] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [transactions, setTransactions] = useState<TransactionBrief[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -29,12 +30,13 @@ export default function TransactionHistory() {
     try {
       const res = await invoke<TransactionBrief[]>("list_transactions", {
         startDate: startDate || undefined, endDate: endDate || undefined,
-        method: method || undefined, page, limit,
+        method: method || undefined, search: searchQuery || undefined,
+        page, limit,
       });
       setTransactions(res);
     } catch { setTransactions([]); }
     finally { setLoading(false); }
-  }, [startDate, endDate, method, page]);
+  }, [startDate, endDate, method, searchQuery, page]);
 
   useEffect(() => { fetchTrx(); }, [fetchTrx]);
 
@@ -43,6 +45,11 @@ export default function TransactionHistory() {
       <PageHeader icon={Receipt} title="Riwayat Transaksi" subtitle="Lihat dan kelola transaksi" />
 
       <div className="flex flex-wrap gap-2 items-end">
+        <div>
+          <label className="label py-1"><span className="label-text">No. Transaksi</span></label>
+          <input type="text" className="input input-bordered input-sm" placeholder="Cari nomor..."
+            value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }} />
+        </div>
         <div>
           <label className="label py-1"><span className="label-text">Dari</span></label>
           <input type="date" className="input input-bordered input-sm" value={startDate} max={today}
