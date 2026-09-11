@@ -8,6 +8,7 @@ import {
   Tag,
   ChartBar,
   GearSix,
+  UsersThree,
   X,
 } from "@phosphor-icons/react";
 import { useUIStore } from "@/stores/uiStore";
@@ -20,6 +21,7 @@ const navItems = [
   { label: "Stok", path: "/stocks", icon: Archive },
   { label: "Promo", path: "/promotions", icon: Tag },
   { label: "Laporan", path: "/reports/daily", icon: ChartBar },
+  { label: "User", path: "/settings/users", icon: UsersThree },
   { label: "Pengaturan", path: "/settings", icon: GearSix },
 ];
 

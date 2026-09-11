@@ -21,6 +21,7 @@ import TransactionDetail from "@/pages/TransactionDetail";
 import Settings from "@/pages/Settings";
 import BackupRestore from "@/pages/BackupRestore";
 import Categories from "@/pages/Categories";
+import Users from "@/pages/Users";
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const currentUser = useUIStore((s) => s.currentUser);
@@ -69,6 +70,7 @@ function AppContent() {
           <Route path="/reports/transactions/:id" element={<AuthGuard><TransactionDetail /></AuthGuard>} />
           <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
           <Route path="/settings/backup" element={<AuthGuard><BackupRestore /></AuthGuard>} />
+          <Route path="/settings/users" element={<AuthGuard><Users /></AuthGuard>} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
