@@ -171,6 +171,7 @@ pub fn list_transactions(
     start_date: Option<String>,
     end_date: Option<String>,
     method: Option<String>,
+    search: Option<String>,
     page: Option<i64>,
     limit: Option<i64>,
     state: State<'_, Database>,
@@ -199,6 +200,12 @@ pub fn list_transactions(
         if !m.is_empty() {
             conditions.push(format!("t.id IN (SELECT transaction_id FROM payments WHERE method = ?{})", param_values.len() + 1));
             param_values.push(Box::new(m.clone()));
+        }
+    }
+    if let Some(ref s) = search {
+        if !s.is_empty() {
+            conditions.push(format!("t.transaction_number LIKE ?{}", param_values.len() + 1));
+            param_values.push(Box::new(format!("%{}%", s)));
         }
     }
 

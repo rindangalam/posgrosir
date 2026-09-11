@@ -363,3 +363,56 @@ pub fn save_stock_opname(
         Err(e) => { conn.execute_batch("ROLLBACK").map_err(|_| "Rollback failed".to_string())?; Err(e) }
     }
 }
+
+#[derive(Debug, serde::Serialize)]
+pub struct StockOpnameRecord {
+    pub id: i64,
+    pub product_id: i64,
+    pub product_name: String,
+    pub plu_code: String,
+    pub system_quantity: i64,
+    pub actual_quantity: i64,
+    pub difference: i64,
+    pub notes: String,
+    pub created_at: String,
+}
+
+#[tauri::command]
+pub fn list_stock_opname(
+    limit: Option<i64>,
+    state: State<'_, Database>,
+) -> Result<Vec<StockOpnameRecord>, String> {
+    let conn = state.conn.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let lim = limit.unwrap_or(50);
+    let mut stmt = conn
+        .prepare(
+            "SELECT so.id, so.product_id, p.name, p.plu_code,
+                    so.system_quantity, so.actual_quantity, so.difference,
+                    so.notes, so.created_at
+             FROM stock_opname so
+             JOIN products p ON p.id = so.product_id
+             ORDER BY so.created_at DESC
+             LIMIT ?1",
+        )
+        .map_err(|e| format!("Query error: {}", e))?;
+
+    let results = stmt
+        .query_map(params![lim], |row| {
+            Ok(StockOpnameRecord {
+                id: row.get(0)?,
+                product_id: row.get(1)?,
+                product_name: row.get(2)?,
+                plu_code: row.get(3)?,
+                system_quantity: row.get(4)?,
+                actual_quantity: row.get(5)?,
+                difference: row.get(6)?,
+                notes: row.get(7)?,
+                created_at: row.get(8)?,
+            })
+        })
+        .map_err(|e| format!("Query error: {}", e))?
+        .filter_map(|r| r.ok())
+        .collect();
+
+    Ok(results)
+}
