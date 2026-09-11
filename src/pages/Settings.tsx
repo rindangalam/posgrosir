@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import toast from "react-hot-toast";
-import { GearSix, Storefront } from "@phosphor-icons/react";
+import { GearSix, Storefront, Lock } from "@phosphor-icons/react";
 import PageHeader from "@/components/ui/PageHeader";
 import { usePrinter, type PrinterInfo } from "@/hooks/usePrinter";
 import { useScale, type ScalePort } from "@/hooks/useScale";
@@ -21,6 +22,7 @@ export default function Settings() {
     setPrinterName, setPaperWidth, setAutoPrint, setOpenDrawer,
     scalePortName, scaleTimeoutMs,
     setScalePortName, setScaleTimeoutMs,
+    currentUser,
   } = useUIStore();
 
   const [printers, setPrinters] = useState<PrinterInfo[]>([]);
@@ -36,6 +38,11 @@ export default function Settings() {
   const [storeAddress, setStoreAddress] = useState("");
   const [storePhone, setStorePhone] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
+
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     const p = loadStoreProfile();
@@ -53,6 +60,38 @@ export default function Settings() {
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2000);
     toast.success("Profil toko disimpan");
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentUser) return;
+    if (!oldPassword || !newPassword) {
+      toast.error("Semua field harus diisi");
+      return;
+    }
+    if (newPassword.length < 4) {
+      toast.error("Password baru minimal 4 karakter");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Konfirmasi password tidak cocok");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await invoke("change_password", {
+        id: currentUser.id,
+        oldPassword,
+        newPassword,
+      });
+      toast.success("Password berhasil diganti");
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   useEffect(() => {
@@ -133,6 +172,33 @@ export default function Settings() {
         </div>
         <button className="btn btn-primary" onClick={handleSaveProfile}>
           {profileSaved ? "Tersimpan ✓" : "Simpan Profil"}
+        </button>
+      </div>
+
+      {/* Change Password */}
+      <div className="bg-base-200 rounded-box p-4 space-y-4">
+        <h2 className="font-bold text-lg flex items-center gap-2">
+          <Lock size={20} className="text-primary" weight="fill" />
+          Ganti Password
+        </h2>
+        <p className="text-sm text-base-content/60">Ubah password akun Anda.</p>
+        <div className="form-control">
+          <label className="label"><span className="label-text">Password Lama</span></label>
+          <input type="password" className="input input-bordered" value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)} placeholder="Masukkan password lama" />
+        </div>
+        <div className="form-control">
+          <label className="label"><span className="label-text">Password Baru</span></label>
+          <input type="password" className="input input-bordered" value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimal 4 karakter" />
+        </div>
+        <div className="form-control">
+          <label className="label"><span className="label-text">Konfirmasi Password Baru</span></label>
+          <input type="password" className="input input-bordered" value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Ulangi password baru" />
+        </div>
+        <button className="btn btn-primary" disabled={changingPassword} onClick={handleChangePassword}>
+          {changingPassword ? <span className="loading loading-spinner" /> : "Ganti Password"}
         </button>
       </div>
 

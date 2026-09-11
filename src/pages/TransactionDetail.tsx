@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import { formatRupiah } from "@/lib/currency";
 import { usePrinter } from "@/hooks/usePrinter";
 import { useUIStore } from "@/stores/uiStore";
@@ -46,13 +47,18 @@ export default function TransactionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { printReceipt } = usePrinter();
-  const { printerName } = useUIStore();
+  const { printerName, currentUser } = useUIStore();
   const [detail, setDetail] = useState<TransactionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [voiding, setVoiding] = useState(false);
   const [refunding, setRefunding] = useState(false);
   const [error, setError] = useState("");
   const [printStatus, setPrintStatus] = useState<string | null>(null);
+
+  const [confirmAction, setConfirmAction] = useState<"void" | "refund" | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  const [confirming, setConfirming] = useState(false);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -69,30 +75,48 @@ export default function TransactionDetail() {
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
-  const handleVoid = async () => {
-    if (!detail || !window.confirm("Void transaksi ini? Stok akan dikembalikan.")) return;
-    setVoiding(true);
-    setError("");
-    try {
-      await invoke("void_transaction", { id: detail.id });
-      fetchDetail();
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setVoiding(false);
-    }
+  const handleVoid = () => {
+    if (!detail) return;
+    setConfirmAction("void");
+    setConfirmPassword("");
+    setConfirmError("");
   };
 
-  const handleRefund = async () => {
-    if (!detail || !window.confirm("Refund transaksi ini? Stok TIDAK akan dikembalikan.")) return;
-    setRefunding(true);
-    setError("");
+  const handleRefund = () => {
+    if (!detail) return;
+    setConfirmAction("refund");
+    setConfirmPassword("");
+    setConfirmError("");
+  };
+
+  const handleConfirmAction = async () => {
+    if (!detail || !confirmAction || !currentUser) return;
+    if (!confirmPassword) {
+      setConfirmError("Password harus diisi");
+      return;
+    }
+    setConfirming(true);
+    setConfirmError("");
     try {
-      await invoke("refund_transaction", { id: detail.id });
+      await invoke("login_user", {
+        input: { username: currentUser.username, password: confirmPassword },
+      });
+      if (confirmAction === "void") {
+        setVoiding(true);
+        await invoke("void_transaction", { id: detail.id });
+        toast.success("Transaksi di-void");
+      } else {
+        setRefunding(true);
+        await invoke("refund_transaction", { id: detail.id });
+        toast.success("Transaksi di-refund");
+      }
+      setConfirmAction(null);
       fetchDetail();
     } catch (err) {
-      setError(String(err));
+      setConfirmError(String(err));
     } finally {
+      setConfirming(false);
+      setVoiding(false);
       setRefunding(false);
     }
   };
@@ -228,6 +252,38 @@ export default function TransactionDetail() {
           </>
         )}
       </div>
+
+      {/* Password Confirmation Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmAction(null)}>
+          <div className="bg-base-100 rounded-box p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-lg mb-2">
+              {confirmAction === "void" ? "Void Transaksi" : "Refund Transaksi"}
+            </h3>
+            <p className="text-sm text-base-content/60 mb-4">
+              {confirmAction === "void"
+                ? "Masukkan password untuk mem-void transaksi ini. Stok akan dikembalikan."
+                : "Masukkan password untuk me-refund transaksi ini. Stok TIDAK akan dikembalikan."}
+            </p>
+            {confirmError && <div className="alert alert-error text-sm mb-3"><span>{confirmError}</span></div>}
+            <input
+              type="password"
+              className="input input-bordered w-full"
+              placeholder="Password Anda"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleConfirmAction(); }}
+              autoFocus
+            />
+            <div className="flex gap-2 mt-4 justify-end">
+              <button className="btn btn-ghost" onClick={() => setConfirmAction(null)}>Batal</button>
+              <button className={`btn ${confirmAction === "void" ? "btn-error" : "btn-warning"}`} disabled={confirming} onClick={handleConfirmAction}>
+                {confirming ? <span className="loading loading-spinner" /> : confirmAction === "void" ? "Void" : "Refund"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
