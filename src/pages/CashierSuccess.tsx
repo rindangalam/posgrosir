@@ -6,19 +6,13 @@ import { useUIStore } from "@/stores/uiStore";
 import { usePrinter, addToPrintQueue } from "@/hooks/usePrinter";
 import { formatRupiah } from "@/lib/currency";
 import { formatReceipt } from "@/lib/receipt";
+import { loadStoreProfile } from "@/lib/constants";
 
 const methodLabel: Record<string, string> = {
   cash: "Tunai",
   qris: "QRIS",
   edc: "EDC/Debit",
 };
-
-function getStoreProfile() {
-  try {
-    const raw = localStorage.getItem("posgrosir_store_profile");
-    return raw ? JSON.parse(raw) : { name: "TOKO GROSIR MAKMUR", address: "Jl. Raya No. 123" };
-  } catch { return { name: "TOKO GROSIR MAKMUR", address: "Jl. Raya No. 123" }; }
-}
 
 export default function CashierSuccess() {
   const navigate = useNavigate();
@@ -56,7 +50,7 @@ export default function CashierSuccess() {
           discount: i.discount || 0,
         }));
 
-        const profile = getStoreProfile();
+        const profile = loadStoreProfile();
         const err = await printReceipt(
           profile.name,
           profile.address,
@@ -113,7 +107,7 @@ export default function CashierSuccess() {
         discount: i.discount || 0,
       }));
 
-      const profile = getStoreProfile();
+      const profile = loadStoreProfile();
       const err = await printReceipt(
         profile.name,
         profile.address,
@@ -135,7 +129,7 @@ export default function CashierSuccess() {
     }
   };
 
-  const profile = getStoreProfile();
+  const profile = loadStoreProfile();
   const receiptText = formatReceipt({
     storeName: profile.name,
     storeAddress: profile.address,

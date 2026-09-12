@@ -20,7 +20,7 @@ const navItems = [
   { label: "Kategori", path: "/categories", icon: SquaresFour },
   { label: "Stok", path: "/stocks", icon: Archive },
   { label: "Promo", path: "/promotions", icon: Tag },
-  { label: "Laporan", path: "/reports/daily", icon: ChartBar },
+  { label: "Laporan", path: "/reports", icon: ChartBar },
   { label: "User", path: "/settings/users", icon: UsersThree },
   { label: "Pengaturan", path: "/settings", icon: GearSix },
 ];
@@ -48,8 +48,9 @@ export default function Sidebar() {
       <nav className="flex-1 p-2 space-y-1 min-w-48">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const isGroup = item.path === "/reports" || item.path === "/settings";
           return (
-            <NavLink key={item.path} to={item.path} end onClick={() => {
+            <NavLink key={item.path} to={item.path} end={!isGroup} onClick={() => {
               if (window.innerWidth < 1024) toggleSidebar();
             }}>
               {({ isActive }) => (

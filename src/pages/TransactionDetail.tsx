@@ -5,13 +5,7 @@ import toast from "react-hot-toast";
 import { formatRupiah } from "@/lib/currency";
 import { usePrinter } from "@/hooks/usePrinter";
 import { useUIStore } from "@/stores/uiStore";
-
-function getStoreProfile() {
-  try {
-    const raw = localStorage.getItem("posgrosir_store_profile");
-    return raw ? JSON.parse(raw) : { name: "TOKO GROSIR MAKMUR", address: "Jl. Raya No. 123" };
-  } catch { return { name: "TOKO GROSIR MAKMUR", address: "Jl. Raya No. 123" }; }
-}
+import { loadStoreProfile } from "@/lib/constants";
 
 interface DetailItem {
   product_name: string;
@@ -123,7 +117,7 @@ export default function TransactionDetail() {
 
   const handleReprint = async () => {
     if (!detail) return;
-    const profile = getStoreProfile();
+    const profile = loadStoreProfile();
     setPrintStatus(null);
     const err = await printReceipt(
       profile.name,
