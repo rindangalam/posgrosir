@@ -62,7 +62,7 @@ export interface ITransactionItem {
   id: number;
   transaction_id: number;
   product_id: number;
-  stock_batch_id: number;
+  stock_batch_id: number | null;
   quantity: number;
   unit: string;
   unit_conversion_factor: number;
