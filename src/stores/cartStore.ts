@@ -4,19 +4,17 @@ import type { ICartItem, IItemDiscount, ITransactionResult } from "@/types/datab
 function recalculate(items: ICartItem[]) {
   const subtotal = items.reduce((sum, i) => sum + i.selling_price * i.quantity, 0);
   const discountTotal = items.reduce((sum, i) => sum + i.discount, 0);
-  const grandTotal = subtotal - discountTotal;
   const itemsWithSubtotal = items.map((i) => ({
     ...i,
     subtotal: i.selling_price * i.quantity - i.discount,
   }));
-  return { items: itemsWithSubtotal, subtotal, discountTotal, grandTotal };
+  return { items: itemsWithSubtotal, subtotal, discountTotal };
 }
 
 interface CartState {
   items: ICartItem[];
   subtotal: number;
   discountTotal: number;
-  grandTotal: number;
   lastTransaction: ITransactionResult | null;
 
   addItem: (item: ICartItem) => void;
@@ -28,11 +26,16 @@ interface CartState {
   setLastTransaction: (trx: ITransactionResult | null) => void;
 }
 
+function calcGrandTotal(subtotal: number, discountTotal: number, taxRate: number) {
+  const afterDiscount = subtotal - discountTotal;
+  const tax = Math.round(afterDiscount * taxRate / 100);
+  return afterDiscount + tax;
+}
+
 export const useCartStore = create<CartState>((set) => ({
   items: [],
   subtotal: 0,
   discountTotal: 0,
-  grandTotal: 0,
   lastTransaction: null,
 
   addItem: (item) =>
@@ -96,7 +99,9 @@ export const useCartStore = create<CartState>((set) => ({
     }),
 
   clearCart: () =>
-    set({ items: [], subtotal: 0, discountTotal: 0, grandTotal: 0 }),
+    set({ items: [], subtotal: 0, discountTotal: 0 }),
 
   setLastTransaction: (trx) => set({ lastTransaction: trx }),
 }));
+
+export { calcGrandTotal };

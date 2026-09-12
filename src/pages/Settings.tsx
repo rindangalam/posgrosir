@@ -6,13 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import { usePrinter, type PrinterInfo } from "@/hooks/usePrinter";
 import { useScale, type ScalePort } from "@/hooks/useScale";
 import { useUIStore } from "@/stores/uiStore";
-
-function loadStoreProfile() {
-  try {
-    const raw = localStorage.getItem("posgrosir_store_profile");
-    return raw ? JSON.parse(raw) : { name: "TOKO GROSIR MAKMUR", address: "Jl. Raya No. 123", phone: "" };
-  } catch { return { name: "TOKO GROSIR MAKMUR", address: "Jl. Raya No. 123", phone: "" }; }
-}
+import { loadStoreProfile } from "@/lib/constants";
 
 export default function Settings() {
   const { listPrinters, testPrint } = usePrinter();
@@ -22,6 +16,7 @@ export default function Settings() {
     setPrinterName, setPaperWidth, setAutoPrint, setOpenDrawer,
     scalePortName, scaleTimeoutMs,
     setScalePortName, setScaleTimeoutMs,
+    taxRate, setTaxRate,
     currentUser,
   } = useUIStore();
 
@@ -200,6 +195,18 @@ export default function Settings() {
         <button className="btn btn-primary" disabled={changingPassword} onClick={handleChangePassword}>
           {changingPassword ? <span className="loading loading-spinner" /> : "Ganti Password"}
         </button>
+      </div>
+
+      {/* Tax Settings */}
+      <div className="bg-base-200 rounded-box p-4 space-y-4">
+        <h2 className="font-bold text-lg">Pajak</h2>
+        <p className="text-sm text-base-content/60">Persentase pajak yang dikenakan pada setiap transaksi.</p>
+        <div className="form-control">
+          <label className="label"><span className="label-text">Tarif Pajak (%)</span></label>
+          <input type="number" className="input input-bordered w-32" min={0} max={100} step={0.5}
+            value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} />
+          <label className="label"><span className="label-text-alt">Contoh: 11 untuk PPN 11%</span></label>
+        </div>
       </div>
 
       {/* Printer Settings */}

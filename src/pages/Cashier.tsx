@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import toast from "react-hot-toast";
 import ProductSearch from "@/components/cashier/ProductSearch";
 import CartItemRow from "@/components/cashier/CartItemRow";
-import { useCartStore } from "@/stores/cartStore";
+import { useCartStore, calcGrandTotal } from "@/stores/cartStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useScale } from "@/hooks/useScale";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
@@ -38,7 +38,6 @@ export default function Cashier() {
     items,
     subtotal,
     discountTotal,
-    grandTotal,
     addItem,
     removeItem,
     updateQty,
@@ -46,7 +45,8 @@ export default function Cashier() {
     applyPromoDiscounts,
     clearCart,
   } = useCartStore();
-  const { scalePortName } = useUIStore();
+  const { scalePortName, taxRate } = useUIStore();
+  const grandTotal = calcGrandTotal(subtotal, discountTotal, taxRate);
   const { readScale } = useScale();
 
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -76,7 +76,8 @@ export default function Cashier() {
     [applyPromoDiscounts]
   );
 
-  useEffect(() => { recalcPromos(items); }, [items.length, recalcPromos]);
+  const cartKey = items.map((i) => `${i.product_id}:${i.quantity}`).join("|");
+  useEffect(() => { recalcPromos(items); }, [cartKey, recalcPromos]);
 
   const handleSelectProduct = useCallback(
     async (result: SearchResult) => {
@@ -312,6 +313,12 @@ export default function Cashier() {
               <div className="flex justify-between text-error">
                 <span>Diskon</span>
                 <span>-{formatRupiah(discountTotal)}</span>
+              </div>
+            )}
+            {taxRate > 0 && (
+              <div className="flex justify-between">
+                <span className="text-base-content/60">Pajak ({taxRate}%)</span>
+                <span>{formatRupiah(Math.round((subtotal - discountTotal) * taxRate / 100))}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-base-300">

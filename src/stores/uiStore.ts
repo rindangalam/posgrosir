@@ -18,6 +18,7 @@ interface UIState {
   openDrawer: boolean;
   scalePortName: string;
   scaleTimeoutMs: number;
+  taxRate: number;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setCurrentRoute: (route: string) => void;
@@ -30,9 +31,11 @@ interface UIState {
   setOpenDrawer: (on: boolean) => void;
   setScalePortName: (name: string) => void;
   setScaleTimeoutMs: (ms: number) => void;
+  setTaxRate: (rate: number) => void;
   loadSettings: () => void;
   savePrinterSettings: () => void;
   saveScaleSettings: () => void;
+  saveTaxSettings: () => void;
 }
 
 function loadPrinterSettings() {
@@ -46,13 +49,23 @@ function loadPrinterSettings() {
 function loadScaleSettings() {
   try {
     const raw = localStorage.getItem("posgrosir_scale_settings");
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        scalePortName: parsed.scalePortName ?? parsed.portName ?? "",
+        scaleTimeoutMs: parsed.scaleTimeoutMs ?? parsed.timeoutMs ?? 3000,
+      };
+    }
   } catch {}
   return { scalePortName: "", scaleTimeoutMs: 3000 };
 }
 
 function loadDarkMode(): boolean {
   try { return localStorage.getItem("posgrosir_dark_mode") === "true"; } catch { return false; }
+}
+
+function loadTaxRate(): number {
+  try { return Number(localStorage.getItem("posgrosir_tax_rate")) || 0; } catch { return 0; }
 }
 
 function loadCurrentUser(): UserInfo | null {
@@ -69,6 +82,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   currentUser: loadCurrentUser(),
   ...loadPrinterSettings(),
   ...loadScaleSettings(),
+  taxRate: loadTaxRate(),
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -117,6 +131,11 @@ export const useUIStore = create<UIState>((set, get) => ({
     get().saveScaleSettings();
   },
 
+  setTaxRate: (rate) => {
+    set({ taxRate: rate });
+    get().saveTaxSettings();
+  },
+
   loadSettings: () => {
     const ps = loadPrinterSettings();
     const ss = loadScaleSettings();
@@ -127,6 +146,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       openDrawer: ps.openDrawer,
       scalePortName: ss.scalePortName,
       scaleTimeoutMs: ss.scaleTimeoutMs,
+      taxRate: loadTaxRate(),
     });
   },
 
@@ -137,6 +157,11 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   saveScaleSettings: () => {
     const { scalePortName, scaleTimeoutMs } = get();
-    localStorage.setItem("posgrosir_scale_settings", JSON.stringify({ portName: scalePortName, timeoutMs: scaleTimeoutMs }));
+    localStorage.setItem("posgrosir_scale_settings", JSON.stringify({ scalePortName, scaleTimeoutMs }));
+  },
+
+  saveTaxSettings: () => {
+    const { taxRate } = get();
+    localStorage.setItem("posgrosir_tax_rate", String(taxRate));
   },
 }));

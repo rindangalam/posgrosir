@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { Money, QrCode, CreditCard } from "@phosphor-icons/react";
-import { useCartStore } from "@/stores/cartStore";
+import { useCartStore, calcGrandTotal } from "@/stores/cartStore";
+import { useUIStore } from "@/stores/uiStore";
 import { formatRupiah } from "@/lib/currency";
 import type { ITransactionResult } from "@/types/database";
 
@@ -22,7 +23,9 @@ const methodIcons: Record<string, React.ReactNode> = {
 
 export default function CashierPayment() {
   const navigate = useNavigate();
-  const { items, grandTotal, subtotal, discountTotal, setLastTransaction } = useCartStore();
+  const { items, subtotal, discountTotal, setLastTransaction } = useCartStore();
+  const { taxRate } = useUIStore();
+  const grandTotal = calcGrandTotal(subtotal, discountTotal, taxRate);
 
   const [payments, setPayments] = useState<PaymentEntry[]>([
     { method: "cash", label: "Tunai", color: "success", amount: "", reference: "" },
