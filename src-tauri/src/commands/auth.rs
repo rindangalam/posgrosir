@@ -26,10 +26,37 @@ pub struct CreateUserInput {
     pub display_name: String,
 }
 
-fn hash_password(password: &str) -> String {
+fn generate_salt() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let seed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
     let mut hasher = Sha256::new();
+    hasher.update(seed.to_le_bytes());
+    let hash = hasher.finalize();
+    hex::encode(&hash[..16])
+}
+
+fn hash_password_with_salt(password: &str, salt: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(salt.as_bytes());
     hasher.update(password.as_bytes());
-    format!("{:x}", hasher.finalize())
+    format!("{}:{}", salt, hex::encode(hasher.finalize()))
+}
+
+fn hash_password(password: &str) -> String {
+    let salt = generate_salt();
+    hash_password_with_salt(password, &salt)
+}
+
+fn verify_password(password: &str, stored: &str) -> bool {
+    if let Some((salt, hash)) = stored.split_once(':') {
+        let computed = hash_password_with_salt(password, salt);
+        computed == stored
+    } else {
+        let mut hasher = Sha256::new();
+        hasher.update(password.as_bytes());
+        let legacy = format!("{:x}", hasher.finalize());
+        legacy == stored
+    }
 }
 
 #[tauri::command]
@@ -38,19 +65,36 @@ pub fn login_user(
     state: State<'_, Database>,
 ) -> Result<UserInfo, String> {
     let conn = state.conn.lock().map_err(|e| format!("Lock error: {}", e))?;
-    let hash = hash_password(&input.password);
 
-    conn.query_row(
-        "SELECT id, username, role, display_name FROM users WHERE username = ?1 AND password_hash = ?2 AND is_active = 1",
-        params![input.username.trim(), hash],
-        |row| Ok(UserInfo {
-            id: row.get(0)?,
-            username: row.get(1)?,
-            role: row.get(2)?,
-            display_name: row.get(3)?,
-        }),
-    )
-    .map_err(|_| "Username atau password salah".to_string())
+    let row = conn.query_row(
+        "SELECT id, username, role, display_name, password_hash FROM users WHERE username = ?1 AND is_active = 1",
+        params![input.username.trim()],
+        |row| Ok((
+            row.get::<_, i64>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, String>(2)?,
+            row.get::<_, String>(3)?,
+            row.get::<_, String>(4)?,
+        )),
+    );
+
+    match row {
+        Ok((id, username, role, display_name, stored_hash)) => {
+            if verify_password(&input.password, &stored_hash) {
+                if !stored_hash.contains(':') {
+                    let new_hash = hash_password(&input.password);
+                    let _ = conn.execute(
+                        "UPDATE users SET password_hash = ?1 WHERE id = ?2",
+                        params![new_hash, id],
+                    );
+                }
+                Ok(UserInfo { id, username, role, display_name })
+            } else {
+                Err("Username atau password salah".to_string())
+            }
+        }
+        Err(_) => Err("Username atau password salah".to_string()),
+    }
 }
 
 pub fn seed_default_admin_inner(conn: &rusqlite::Connection) -> Result<(), String> {
@@ -93,7 +137,7 @@ pub fn change_password(
         .query_row("SELECT password_hash FROM users WHERE id = ?1", params![id], |row| row.get(0))
         .map_err(|_| "User tidak ditemukan".to_string())?;
 
-    if stored_hash != hash_password(&old_password) {
+    if !verify_password(&old_password, &stored_hash) {
         return Err("Password lama salah".to_string());
     }
 
