@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import { useCartStore } from "@/stores/cartStore";
 import { useUIStore } from "@/stores/uiStore";
 import { usePrinter, addToPrintQueue } from "@/hooks/usePrinter";
+import { useClickSound } from "@/hooks/useClickSound";
 import { formatRupiah } from "@/lib/currency";
 import { formatReceipt } from "@/lib/receipt";
 import { loadStoreProfile } from "@/lib/constants";
@@ -19,6 +21,7 @@ export default function CashierSuccess() {
   const { items, lastTransaction, clearCart } = useCartStore();
   const { autoPrint, openDrawer, printerName } = useUIStore();
   const { printReceipt } = usePrinter();
+  const { play } = useClickSound();
   const [showReceipt, setShowReceipt] = useState(false);
   const [printStatus, setPrintStatus] = useState<string | null>(null);
   const printed = useRef(false);
@@ -28,6 +31,7 @@ export default function CashierSuccess() {
       navigate("/cashier", { replace: true });
       return;
     }
+    play("success");
 
     if (autoPrint && printerName && !printed.current) {
       printed.current = true;
@@ -37,6 +41,7 @@ export default function CashierSuccess() {
             const detail: any = await invoke("get_transaction_detail", { id: lastTransaction!.id });
             return detail;
           } catch {
+            toast.error("Gagal memuat detail transaksi");
             return null;
           }
         };
@@ -126,6 +131,7 @@ export default function CashierSuccess() {
       setPrintStatus(err ? `Gagal cetak: ${err}` : "Struk berhasil dicetak");
     } catch {
       setPrintStatus("Gagal mengambil detail transaksi");
+      toast.error("Gagal memuat detail transaksi");
     }
   };
 

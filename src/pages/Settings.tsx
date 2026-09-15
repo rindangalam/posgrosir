@@ -17,6 +17,7 @@ export default function Settings() {
     scalePortName, scaleTimeoutMs,
     setScalePortName, setScaleTimeoutMs,
     taxRate, setTaxRate,
+    soundEnabled, setSoundEnabled,
     currentUser,
   } = useUIStore();
 
@@ -209,6 +210,18 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Sound Settings */}
+      <div className="bg-base-200 rounded-box p-4 space-y-4">
+        <h2 className="font-bold text-lg">Suara</h2>
+        <div className="form-control">
+          <label className="label cursor-pointer justify-start gap-3">
+            <input type="checkbox" className="toggle toggle-primary"
+              checked={soundEnabled} onChange={(e) => setSoundEnabled(e.target.checked)} />
+            <span className="label-text">Suara Kasir (klik tombol)</span>
+          </label>
+        </div>
+      </div>
+
       {/* Printer Settings */}
       <div className="bg-base-200 rounded-box p-4 space-y-4">
         <h2 className="font-bold text-lg">Printer Thermal</h2>
@@ -309,6 +322,36 @@ export default function Settings() {
 
       {/* Print Queue */}
       <PrintQueueSection />
+
+      {/* Seed Data */}
+      <SeedDataSection />
+    </div>
+  );
+}
+
+function SeedDataSection() {
+  const [seeding, setSeeding] = useState(false);
+
+  const handleSeed = async () => {
+    if (!window.confirm("Isi database dengan data dummy?\n\nIni akan menambah: 5 kategori, 25 produk, 28 batch stok, 7 transaksi, 2 promo.")) return;
+    setSeeding(true);
+    try {
+      const msg = await invoke<string>("seed_dummy_data");
+      toast.success(msg);
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setSeeding(false);
+    }
+  };
+
+  return (
+    <div className="bg-base-200 rounded-box p-4 space-y-4">
+      <h2 className="font-bold text-lg">Data Dummy</h2>
+      <p className="text-sm text-base-content/60">Isi database dengan data contoh untuk testing. Aman dijalankan berulang kali.</p>
+      <button className="btn btn-warning" disabled={seeding} onClick={handleSeed}>
+        {seeding ? <span className="loading loading-spinner" /> : "Isi Data Dummy"}
+      </button>
     </div>
   );
 }
@@ -321,7 +364,7 @@ function PrintQueueSection() {
     try {
       const raw = localStorage.getItem("posgrosir_print_queue");
       setQueue(raw ? JSON.parse(raw) : []);
-    } catch { setQueue([]); }
+    } catch { setQueue([]); toast.error("Gagal memuat antrian cetak"); }
   }, []);
 
   const handleRetryAll = async () => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { formatRupiah } from "@/lib/currency";
+import { useClickSound } from "@/hooks/useClickSound";
 
 interface SearchResult {
   product: {
@@ -33,6 +34,7 @@ export default function ProductSearch({ onSelectProduct, inputRef }: Props) {
   const [showDropdown, setShowDropdown] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { play } = useClickSound();
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) {
@@ -68,6 +70,7 @@ export default function ProductSearch({ onSelectProduct, inputRef }: Props) {
   }, []);
 
   const handleSelect = (item: SearchResult) => {
+    play("click");
     onSelectProduct(item);
     setQuery("");
     setResults([]);

@@ -19,6 +19,7 @@ interface UIState {
   scalePortName: string;
   scaleTimeoutMs: number;
   taxRate: number;
+  soundEnabled: boolean;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setCurrentRoute: (route: string) => void;
@@ -32,10 +33,12 @@ interface UIState {
   setScalePortName: (name: string) => void;
   setScaleTimeoutMs: (ms: number) => void;
   setTaxRate: (rate: number) => void;
+  setSoundEnabled: (on: boolean) => void;
   loadSettings: () => void;
   savePrinterSettings: () => void;
   saveScaleSettings: () => void;
   saveTaxSettings: () => void;
+  saveSoundSettings: () => void;
 }
 
 function loadPrinterSettings() {
@@ -68,6 +71,10 @@ function loadTaxRate(): number {
   try { return Number(localStorage.getItem("posgrosir_tax_rate")) || 0; } catch { return 0; }
 }
 
+function loadSoundEnabled(): boolean {
+  try { return localStorage.getItem("posgrosir_sound_enabled") !== "false"; } catch { return true; }
+}
+
 function loadCurrentUser(): UserInfo | null {
   try {
     const raw = localStorage.getItem("posgrosir_current_user");
@@ -83,6 +90,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   ...loadPrinterSettings(),
   ...loadScaleSettings(),
   taxRate: loadTaxRate(),
+  soundEnabled: loadSoundEnabled(),
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -136,6 +144,11 @@ export const useUIStore = create<UIState>((set, get) => ({
     get().saveTaxSettings();
   },
 
+  setSoundEnabled: (on) => {
+    set({ soundEnabled: on });
+    get().saveSoundSettings();
+  },
+
   loadSettings: () => {
     const ps = loadPrinterSettings();
     const ss = loadScaleSettings();
@@ -147,6 +160,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       scalePortName: ss.scalePortName,
       scaleTimeoutMs: ss.scaleTimeoutMs,
       taxRate: loadTaxRate(),
+      soundEnabled: loadSoundEnabled(),
     });
   },
 
@@ -163,5 +177,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   saveTaxSettings: () => {
     const { taxRate } = get();
     localStorage.setItem("posgrosir_tax_rate", String(taxRate));
+  },
+
+  saveSoundSettings: () => {
+    const { soundEnabled } = get();
+    localStorage.setItem("posgrosir_sound_enabled", String(soundEnabled));
   },
 }));

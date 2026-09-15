@@ -8,6 +8,7 @@ import { useCartStore, calcGrandTotal } from "@/stores/cartStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useScale } from "@/hooks/useScale";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
+import { useClickSound } from "@/hooks/useClickSound";
 import { formatRupiah } from "@/lib/currency";
 import type { IItemDiscount } from "@/types/database";
 
@@ -48,6 +49,7 @@ export default function Cashier() {
   const { scalePortName, taxRate } = useUIStore();
   const grandTotal = calcGrandTotal(subtotal, discountTotal, taxRate);
   const { readScale } = useScale();
+  const { play } = useClickSound();
 
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
@@ -71,7 +73,7 @@ export default function Cashier() {
         }));
         const result = await invoke<IItemDiscount[]>("calculate_discounts", { items: discountItems });
         applyPromoDiscounts(result);
-      } catch { /* promo not available */ }
+      } catch { toast.error("Gagal menghitung promo"); }
     },
     [applyPromoDiscounts]
   );
@@ -83,7 +85,7 @@ export default function Cashier() {
     async (result: SearchResult) => {
       const p = result.product;
       let conversions: { from_unit: string; to_unit: string; factor: number }[] = [];
-      try { conversions = await invoke("get_unit_conversions", { productId: p.id }); } catch { /* ok */ }
+      try { conversions = await invoke("get_unit_conversions", { productId: p.id }); } catch { toast.error("Gagal memuat konversi satuan"); }
       const hasConversions = conversions.length > 0;
       const selectedUnit = hasConversions ? conversions[0].to_unit : p.base_unit;
       const factor = hasConversions ? conversions[0].factor : 1;
@@ -178,13 +180,14 @@ export default function Cashier() {
       }
     } catch {
       setWeighingError("Gagal membaca timbangan");
+      toast.error("Gagal membaca timbangan");
     } finally {
       setWeighing(false);
       setWeighingTarget(null);
     }
   };
 
-  const handlePay = () => { navigate("/cashier/payment"); };
+  const handlePay = () => { play("click"); navigate("/cashier/payment"); };
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -338,7 +341,7 @@ export default function Cashier() {
             Lanjut ke Pembayaran
           </button>
           {items.length > 0 && (
-            <button className="btn btn-ghost btn-sm w-full" onClick={() => { if (window.confirm("Batalkan transaksi?")) clearCart(); }}>
+            <button className="btn btn-ghost btn-sm w-full" onClick={() => { play("remove"); if (window.confirm("Batalkan transaksi?")) clearCart(); }}>
               Batal
             </button>
           )}

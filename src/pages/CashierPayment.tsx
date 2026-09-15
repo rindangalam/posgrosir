@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Money, QrCode, CreditCard } from "@phosphor-icons/react";
 import { useCartStore, calcGrandTotal } from "@/stores/cartStore";
 import { useUIStore } from "@/stores/uiStore";
+import { useClickSound } from "@/hooks/useClickSound";
 import { formatRupiah } from "@/lib/currency";
 import type { ITransactionResult } from "@/types/database";
 
@@ -26,6 +27,7 @@ export default function CashierPayment() {
   const { items, subtotal, discountTotal, setLastTransaction } = useCartStore();
   const { taxRate } = useUIStore();
   const grandTotal = calcGrandTotal(subtotal, discountTotal, taxRate);
+  const { play } = useClickSound();
 
   const [payments, setPayments] = useState<PaymentEntry[]>([
     { method: "cash", label: "Tunai", color: "success", amount: "", reference: "" },
@@ -59,6 +61,7 @@ export default function CashierPayment() {
 
   const handlePay = async () => {
     if (!canPay || saving) return;
+    play("success");
     setSaving(true);
     setError("");
 
@@ -99,7 +102,7 @@ export default function CashierPayment() {
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button className="btn btn-ghost btn-sm" onClick={() => navigate("/cashier")}>
+        <button className="btn btn-ghost btn-sm" onClick={() => { play("click"); navigate("/cashier"); }}>
           ← Kembali
         </button>
         <h1 className="text-2xl font-bold">Pilih Pembayaran</h1>
@@ -140,7 +143,7 @@ export default function CashierPayment() {
                 className="input input-bordered flex-1 text-right text-lg"
                 placeholder="0"
                 value={pay.amount}
-                onChange={(e) => updatePayment(idx, "amount", e.target.value)}
+                onChange={(e) => { play("input"); updatePayment(idx, "amount", e.target.value); }}
               />
               {pay.method === "qris" && (
                 <input

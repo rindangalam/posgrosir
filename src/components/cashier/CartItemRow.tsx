@@ -1,5 +1,6 @@
 import type { ICartItem } from "@/types/database";
 import { formatRupiah } from "@/lib/currency";
+import { useClickSound } from "@/hooks/useClickSound";
 
 interface Props {
   item: ICartItem;
@@ -9,6 +10,8 @@ interface Props {
 }
 
 export default function CartItemRow({ item, onUpdateQty, onRemove, onDiscount }: Props) {
+  const { play } = useClickSound();
+
   return (
     <div className="flex items-center gap-3 py-2 px-2 hover:bg-base-200 rounded-lg group">
       <div className="flex-1 min-w-0">
@@ -29,14 +32,14 @@ export default function CartItemRow({ item, onUpdateQty, onRemove, onDiscount }:
       <div className="flex items-center gap-1">
         <button
           className="btn btn-xs btn-ghost btn-square"
-          onClick={() => item.quantity > 1 && onUpdateQty(item.product_id, item.quantity - 1)}
+          onClick={() => { play("click"); item.quantity > 1 && onUpdateQty(item.product_id, item.quantity - 1); }}
         >
           -
         </button>
         <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
         <button
           className="btn btn-xs btn-ghost btn-square"
-          onClick={() => onUpdateQty(item.product_id, item.quantity + 1)}
+          onClick={() => { play("click"); onUpdateQty(item.product_id, item.quantity + 1); }}
         >
           +
         </button>
@@ -51,7 +54,7 @@ export default function CartItemRow({ item, onUpdateQty, onRemove, onDiscount }:
 
       <button
         className="btn btn-xs btn-ghost btn-square text-info"
-        onClick={() => onDiscount(item.product_id)}
+        onClick={() => { play("click"); onDiscount(item.product_id); }}
         title="Diskon manual"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -61,7 +64,7 @@ export default function CartItemRow({ item, onUpdateQty, onRemove, onDiscount }:
 
       <button
         className="btn btn-xs btn-ghost btn-square opacity-0 group-hover:opacity-100 transition-opacity text-error"
-        onClick={() => onRemove(item.product_id)}
+        onClick={() => { play("remove"); onRemove(item.product_id); }}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
