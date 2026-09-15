@@ -116,6 +116,7 @@ pub fn run() {
             commands::backup::import_backup_file,
             commands::products::import_products_xlsx,
             commands::products::download_product_template,
+            commands::seed::seed_dummy_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

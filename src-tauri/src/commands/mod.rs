@@ -7,3 +7,4 @@ pub mod backup;
 pub mod promotions;
 pub mod printer;
 pub mod scales;
+pub mod seed;

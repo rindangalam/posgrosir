@@ -48,7 +48,7 @@ fn hash_password(password: &str) -> String {
 }
 
 fn verify_password(password: &str, stored: &str) -> bool {
-    if let Some((salt, hash)) = stored.split_once(':') {
+    if let Some((salt, _hash)) = stored.split_once(':') {
         let computed = hash_password_with_salt(password, salt);
         computed == stored
     } else {
