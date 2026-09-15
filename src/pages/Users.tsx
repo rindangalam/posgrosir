@@ -29,6 +29,7 @@ export default function Users() {
       setUsers(res);
     } catch {
       setUsers([]);
+      toast.error("Gagal memuat data");
     } finally {
       setLoading(false);
     }

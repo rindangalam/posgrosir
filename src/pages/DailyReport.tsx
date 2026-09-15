@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import { ChartBar, Coins, TrendUp, ShoppingCart, CurrencyDollar, Download, Printer } from "@phosphor-icons/react";
 import { formatRupiah } from "@/lib/currency";
 import PageHeader from "@/components/ui/PageHeader";
@@ -32,7 +33,7 @@ export default function DailyReport() {
         invoke<LowStockProduct[]>("get_low_stock_products"),
       ]);
       setSummary(sum); setTopProducts(top); setLowStock(low);
-    } catch { setSummary(null); }
+    } catch { setSummary(null); toast.error("Gagal memuat data"); }
     finally { setLoading(false); }
   }, []);
 

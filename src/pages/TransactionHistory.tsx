@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import { Receipt } from "@phosphor-icons/react";
 import { formatRupiah } from "@/lib/currency";
 import PageHeader from "@/components/ui/PageHeader";
@@ -34,7 +35,7 @@ export default function TransactionHistory() {
         page, limit,
       });
       setTransactions(res);
-    } catch { setTransactions([]); }
+    } catch { setTransactions([]); toast.error("Gagal memuat data"); }
     finally { setLoading(false); }
   }, [startDate, endDate, method, searchQuery, page]);
 

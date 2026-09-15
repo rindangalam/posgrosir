@@ -22,7 +22,7 @@ export default function Categories() {
     try {
       const res = await invoke<Category[]>("list_categories");
       setCategories(res);
-    } catch { /* ignore */ }
+    } catch { toast.error("Gagal memuat data"); }
     finally { setLoading(false); }
   }, []);
 

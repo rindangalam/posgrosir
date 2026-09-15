@@ -51,12 +51,12 @@ export default function Products() {
         search: search || undefined, categoryId: catId, page, limit,
       });
       setProducts(res);
-    } catch { setProducts([]); }
+    } catch { setProducts([]); toast.error("Gagal memuat data"); }
     finally { setLoading(false); }
   }, [search, filterCat, page]);
 
   const fetchCategories = useCallback(async () => {
-    try { setCategories(await invoke<Category[]>("list_categories")); } catch { /* ignore */ }
+    try { setCategories(await invoke<Category[]>("list_categories")); } catch { toast.error("Gagal memuat kategori"); }
   }, []);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 
 interface ProductBrief {
   id: number;
@@ -72,7 +73,7 @@ export default function StockBatchForm() {
           base_unit: res.product.base_unit,
         });
       } catch {
-        /* ignore */
+        toast.error("Gagal memuat data produk");
       }
     })();
   }, [productIdParam, isEdit]);
@@ -85,6 +86,7 @@ export default function StockBatchForm() {
       setSearchResults(res.map((r) => r.product));
     } catch {
       setSearchResults([]);
+      toast.error("Gagal mencari produk");
     }
   };
 

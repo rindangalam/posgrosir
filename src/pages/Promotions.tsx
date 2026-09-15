@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import toast from "react-hot-toast";
 import { Tag, Plus, Trash } from "@phosphor-icons/react";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
@@ -54,7 +55,7 @@ export default function Promotions() {
       ]);
       setCategories(cats);
       setProducts(prods.map((p) => ({ id: p.product.id, name: p.product.name, plu_code: p.product.plu_code })));
-    } catch { /* ignore */ }
+    } catch { toast.error("Gagal memuat data"); }
   }, []);
 
   useEffect(() => { if (showForm) fetchScopeOptions(); }, [showForm, fetchScopeOptions]);

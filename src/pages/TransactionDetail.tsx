@@ -62,6 +62,7 @@ export default function TransactionDetail() {
       setDetail(res);
     } catch {
       setDetail(null);
+      toast.error("Gagal memuat detail transaksi");
     } finally {
       setLoading(false);
     }

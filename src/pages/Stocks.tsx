@@ -31,7 +31,7 @@ export default function Stocks() {
     try {
       const res = await invoke<{ product: ProductBrief }[]>("search_products", { query: q.trim() });
       setSearchResults(res.map((r) => r.product));
-    } catch { setSearchResults([]); }
+    } catch { setSearchResults([]); toast.error("Gagal mencari produk"); }
   }, []);
 
   const fetchBatches = useCallback(async (productId: number) => {
@@ -40,7 +40,7 @@ export default function Stocks() {
       const res = await invoke<StockBatch[]>("list_batches", { productId });
       setBatches(res);
       setTotalStock(res.reduce((sum, b) => sum + b.quantity, 0));
-    } catch { setBatches([]); setTotalStock(0); }
+    } catch { setBatches([]); setTotalStock(0); toast.error("Gagal memuat batch stok"); }
     finally { setLoading(false); }
   }, []);
 
@@ -54,14 +54,14 @@ export default function Stocks() {
       });
       setSearchResults([]); setSearchQuery("");
       fetchBatches(p.id);
-    } catch { /* ignore */ }
+    } catch { toast.error("Gagal memuat detail produk"); }
   };
 
   const handleDelete = async (batchId: number) => {
     try {
       await invoke("delete_batch", { id: batchId });
       if (selectedProduct) fetchBatches(selectedProduct.id);
-    } catch { /* ignore */ }
+    } catch { toast.error("Gagal menghapus batch"); }
   };
 
   const [editBatch, setEditBatch] = useState<StockBatch | null>(null);
